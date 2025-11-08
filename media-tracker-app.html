@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Tracker - Shows, Movies & Audiobooks</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --medium: #475569;
+            --light: #f1f5f9;
+            --white: #ffffff;
+            --gray: #64748b;
+            --border: #e2e8f0;
+            
+            /* Service Colors */
+            --netflix: #e50914;
+            --prime: #00a8e1;
+            --disney: #113ccf;
+            --apple: #000000;
+            --sky: #0072c9;
+            --paramount: #0064ff;
+            --audible: #ff9900;
+            --crunchyroll: #ff6600;
+            --wow: #e5007e;
+            --rtl: #ff0000;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Notion Embed Optimization */
+        .notion-embed-mode {
+            padding: 0;
+            background: white;
+        }
+        
+        .notion-embed-mode .container {
+            border-radius: 0;
+            max-width: 100%;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 25px 30px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .header-subtitle {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .sync-status {
+            position: absolute;
+            top: 25px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .sync-indicator {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            background: var(--light);
+            border-bottom: 2px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            background: transparent;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #475569;
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            color: #4f46e5;
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .tab.active {
+            color: #4f46e5;
+            background: white;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .tab-badge {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 2px 6px;
+            background: var(--primary);
+            color: white;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Controls */
+        .controls {
+            padding: 20px 30px;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 8פ;
+            align-items: center;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .view-toggle {
+            display: flex;
+            background: var(--light);
+            border-radius: 10px;
+            padding: 2px;
+        }
+
+        .view-btn {
+            padding: 6px 12px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+
+        .view-btn.active {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Content Area */
+        .content {
+            padding: 20px;
+            min-height: 400px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        /* Grid View */
+        .grid-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .media-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .media-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            padding: 15px;
+            background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-bottom: 5px;
+            color: #0f172a;
+            letter-spacing: -0.01em;
+        }
+
+        .card-meta {
+            font-size: 0.85rem;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .card-body {
+            padding: 15px;
+        }
+
+        .card-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .next-episode {
+            font-size: 0.9rem;
+            color: #0f172a;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .episode-date {
+            font-size: 0.85rem;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        /* Service Badges */
+        .service-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: white;
+        }
+
+        .service-netflix { background: var(--netflix); }
+        .service-prime { background: var(--prime); }
+        .service-disney { background: var(--disney); }
+        .service-apple { background: var(--apple); }
+        .service-sky { background: var(--sky); }
+        .service-paramount { background: var(--paramount); }
+        .service-audible { background: var(--audible); }
+        .service-crunchyroll { background: var(--crunchyroll); }
+        .service-wow { background: var(--wow); }
+        .service-rtl { background: var(--rtl); }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-today {
+            background: #fef3c7;
+            color: #92400e;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(245, 158, 11, 0.5); }
+            50% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.8); }
+        }
+
+        .status-upcoming { background: #dbeafe; color: #1e3a8a; }
+        .status-new { background: #dcfce7; color: #14532d; }
+        .status-completed { background: #f3f4f6; color: #6b7280; }
+        .status-available { background: #f0fdf4; color: #14532d; }
+        .status-missing { background: #fef2f2; color: #7f1d1d; }
+
+        /* Timeline View */
+        .timeline-view {
+            padding: 20px 0;
+        }
+
+        .timeline-day {
+            margin-bottom: 30px;
+        }
+
+        .timeline-date {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #0f172a;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            background: linear-gradient(to right, #f1f5f9, #f8fafc);
+            border-left: 4px solid var(--primary);
+            border-radius: 0 8px 8px 0;
+            letter-spacing: -0.01em;
+        }
+
+        .timeline-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-left: 20px;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 14px 16px;
+            background: rgb(2, 2, 48);
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .timeline-item:hover {
+            border-color: #6366f1;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
+            transform: translateX(4px);
+            background: linear-gradient(to right, white, #fafaff);
+        }
+
+        .timeline-time {
+            font-weight: 600;
+            color: #475569;
+            min-width: 60px;
+            font-size: 0.85rem;
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+            letter-spacing: -0.01em;
+        }
+
+        .timeline-subtitle {
+            font-size: 0.85rem;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Audiobook Specific Styles */
+        .book-series {
+            margin-bottom: 25px;
+        }
+
+        .series-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: var(--light);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .series-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #0f172a;
+            letter-spacing: -0.01em;
+        }
+
+        .series-count {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .count-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .count-owned {
+            color: var(--success);
+        }
+
+        .count-missing {
+            color: var(--warning);
+        }
+
+        .count-upcoming {
+            color: var(--primary);
+        }
+
+        .series-books {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            padding: 10px 0;
+        }
+
+        .book-item {
+            padding: 10px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .book-item:hover {
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .book-owned {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+
+        .book-missing {
+            background: #fef3c7;
+            border-color: #fde68a;
+        }
+
+        .book-upcoming {
+            background: #ede9fe;
+            border-color: #c7d2fe;
+            font-style: italic;
+        }
+
+        .book-number {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .book-title {
+            margin: 5px 0;
+            color: #0f172a;
+            font-weight: 500;
+        }
+
+        .book-date {
+            font-size: 0.75rem;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .settings-panel.open {
+            right: 0;
+        }
+
+        .settings-header {
+            padding: 20px;
+            background: var(--light);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .settings-content {
+            padding: 20px;
+        }
+
+        .setting-group {
+            margin-bottom: 25px;
+        }
+
+        .setting-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #0f172a;
+            font-size: 0.95rem;
+        }
+
+        .setting-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 15px 30px;
+            background: var(--light);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        .footer-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.4rem;
+            }
+            
+            .sync-status {
+                position: static;
+                margin-top: 10px;
+                width: fit-content;
+            }
+            
+            .controls {
+                padding: 15px;
+            }
+            
+            .grid-view {
+                grid-template-columns: 1fr;
+            }
+            
+            .settings-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --dark: #f8fafc;
+                --medium: #cbd5e1;
+                --light: #1e293b;
+                --white: #0f172a;
+                --gray: #94a3b8;
+                --border: #334155;
+            }
+            
+            body {
+                background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            }
+            
+            .container {
+                background: rgba(15, 23, 42, 0.98);
+            }
+            
+            .timeline-title,
+            .card-title,
+            .show-title,
+            .series-title,
+            .next-episode,
+            .book-title {
+                color: #f8fafc;
+            }
+            
+            .timeline-subtitle,
+            .card-meta,
+            .season-info,
+            .episode-date,
+            .book-date,
+            .timeline-time {
+                color: #cbd5e1;
+            }
+            
+            .timeline-date {
+                color: #f8fafc;
+                background: linear-gradient(to right, #1e293b, #0f172a);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📺 Universal Media Tracker</h1>
+            <div class="header-subtitle">TV Shows • Movies • Audiobooks | Germany VOD</div>
+            <div class="sync-status">
+                <div class="sync-indicator"></div>
+                <span>Live Sync</span>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="upcoming">
+                📅 Upcoming
+                <span class="tab-badge">7</span>
+            </button>
+            <button class="tab" data-tab="shows">
+                📺 TV Shows
+                <span class="tab-badge">12</span>
+            </button>
+            <button class="tab" data-tab="movies">
+                🎬 Movies
+                <span class="tab-badge">3</span>
+            </button>
+            <button class="tab" data-tab="audiobooks">
+                🎧 Audiobooks
+                <span class="tab-badge">45</span>
+            </button>
+            <button class="tab" data-tab="calendar">
+                📆 Calendar View
+            </button>
+        </div>
+
+        <div class="controls">
+            <input type="text" class="search-box" placeholder="Search titles, episodes, books..." id="searchInput">
+            
+            <div class="filter-group" id="serviceFilters">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="netflix">Netflix</button>
+                <button class="filter-btn" data-filter="prime">Prime</button>
+                <button class="filter-btn" data-filter="disney">Disney+</button>
+                <button class="filter-btn" data-filter="sky">Sky</button>
+                <button class="filter-btn" data-filter="apple">Apple TV+</button>
+                <button class="filter-btn" data-filter="audible">Audible</button>
+            </div>
+            
+            <div class="view-toggle">
+                <button class="view-btn active" data-view="grid">Grid</button>
+                <button class="view-btn" data-view="list">List</button>
+                <button class="view-btn" data-view="timeline">Timeline</button>
+            </div>
+        </div>
+
+        <div class="content" id="content">
+            <!-- Upcoming Tab Content -->
+            <div class="tab-content active" data-content="upcoming">
+                <div class="timeline-view">
+                    <div class="timeline-day">
+                        <div class="timeline-date">Today - Thursday, August 28</div>
+                        <div class="timeline-items">
+                            <div class="timeline-item">
+                                <div class="timeline-time">00:00</div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">Dandadan - Episode 9</div>
+                                    <div class="timeline-subtitle">
+                                        <span class="service-badge service-crunchyroll">Crunchyroll</span>
+                                        Season 2 continues
+                                    </div>
+                                </div>
+                                <span class="status-badge status-today">TODAY</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-day">
+                        <div class="timeline-date">Tomorrow - Friday, August 29</div>
+                        <div class="timeline-items">
+                            <div class="timeline-item">
+                                <div class="timeline-time">09:00</div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">Foundation - Episode 8</div>
+                                    <div class="timeline-subtitle">
+                                        <span class="service-badge service-apple">Apple TV+</span>
+                                        Season 3 continues
+                                    </div>
+                                </div>
+                                <span class="status-badge status-upcoming">Tomorrow</span>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-time">09:00</div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">Invasion - Episode 2</div>
+                                    <div class="timeline-subtitle">
+                                        <span class="service-badge service-apple">Apple TV+</span>
+                                        Season 3 weekly release
+                                    </div>
+                                </div>
+                                <span class="status-badge status-upcoming">Tomorrow</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-day">
+                        <div class="timeline-date">Monday, September 1</div>
+                        <div class="timeline-items">
+                            <div class="timeline-item">
+                                <div class="timeline-time">09:00</div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">Sakamoto Days - Episode 19</div>
+                                    <div class="timeline-subtitle">
+                                        <span class="service-badge service-netflix">Netflix</span>
+                                        Part 2 continues
+                                    </div>
+                                </div>
+                                <span class="status-badge status-upcoming">In 4 days</span>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-time">Available</div>
+                                <div class="timeline-content">
+                                    <div class="timeline-title">The Expanse Book 10: Memory's Legion</div>
+                                    <div class="timeline-subtitle">
+                                        <span class="service-badge service-audible">Audible</span>
+                                        New release available
+                                    </div>
+                                </div>
+                                <span class="status-badge status-new">NEW</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TV Shows Tab Content -->
+            <div class="tab-content" data-content="shows">
+                <div class="grid-view">
+                    <div class="media-card" data-service="apple">
+                        <div class="card-header">
+                            <div class="card-title">Foundation</div>
+                            <div class="card-meta">Season 3 • 10 Episodes</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-info">
+                                <span class="service-badge service-apple">Apple TV+</span>
+                                <span class="status-badge status-upcoming">Airing</span>
+                            </div>
+                            <div class="next-episode">Next: Episode 8</div>
+                            <div class="episode-date">Tomorrow, Aug 29</div>
+                        </div>
+                    </div>
+                    
+                    <div class="media-card" data-service="apple">
+                        <div class="card-header">
+                            <div class="card-title">Invasion</div>
+                            <div class="card-meta">Season 3 • 10 Episodes</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-info">
+                                <span class="service-badge service-apple">Apple TV+</span>
+                                <span class="status-badge status-new">New Season</span>
+                            </div>
+                            <div class="next-episode">Next: Episode 2</div>
+                            <div class="episode-date">Tomorrow, Aug 29</div>
+                        </div>
+                    </div>
+                    
+                    <div class="media-card" data-service="netflix">
+                        <div class="card-header">
+                            <div class="card-title">Sakamoto Days</div>
+                            <div class="card-meta">Season 1 Part 2 • 22 Episodes</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-info">
+                                <span class="service-badge service-netflix">Netflix</span>
+                                <span class="status-badge status-upcoming">Airing</span>
+                            </div>
+                            <div class="next-episode">Next: Episode 19</div>
+                            <div class="episode-date">Monday, Sep 1</div>
+                        </div>
+                    </div>
+                    
+                    <div class="media-card" data-service="apple">
+                        <div class="card-header">
+                            <div class="card-title">Severance</div>
+                            <div class="card-meta">Season 2 • 10 Episodes</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-info">
+                                <span class="service-badge service-apple">Apple TV+</span>
+                                <span class="status-badge status-upcoming">Returns March</span>
+                            </div>
+                            <div class="next-episode">Next: Episode 8</div>
+                            <div class="episode-date">March 7, 2025</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Movies Tab Content -->
+            <div class="tab-content" data-content="movies">
+                <div class="grid-view">
+                    <div class="media-card" data-service="netflix">
+                        <div class="card-header">
+                            <div class="card-title">Happy Gilmore 2</div>
+                            <div class="card-meta">Comedy • Adam Sandler</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-info">
+                                <span class="service-badge service-netflix">Netflix</span>
+                                <span class="status-badge status-upcoming">Coming 2025</span>
+                            </div>
+                            <div class="next-episode">Sequel Film</div>
+                            <div class="episode-date">TBA 2025</div>
+                        </div>
+                    </div>
+                    
+                    <div class="media-card" data-service="disney">
+                        <div class="card-header">
+                            <div class="card-title">Alien: Earth</div>
+                            <div class="card-meta">Sci-Fi Series • Prequel</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-info">
+                                <span class="service-badge service-disney">Disney+</span>
+                                <span class="status-badge status-upcoming">Coming Soon</span>
+                            </div>
+                            <div class="next-episode">Limited Series</div>
+                            <div class="episode-date">2025</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audiobooks Tab Content -->
+            <div class="tab-content" data-content="audiobooks">
+                <div class="book-series">
+                    <div class="series-header">
+                        <div class="series-title">The Expanse Series</div>
+                        <div class="series-count">
+                            <div class="count-item count-owned">📚 Owned: 9</div>
+                            <div class="count-item count-missing">📖 Missing: 1</div>
+                            <div class="count-item count-upcoming">⏳ Upcoming: 0</div>
+                        </div>
+                    </div>
+                    <div class="series-books">
+                        <div class="book-item book-owned">
+                            <div class="book-number">Book 1</div>
+                            <div class="book-title">Leviathan Wakes</div>
+                            <div class="book-date">✓ In Library</div>
+                        </div>
+                        <div class="book-item book-owned">
+                            <div class="book-number">Book 2</div>
+                            <div class="book-title">Caliban's War</div>
+                            <div class="book-date">✓ In Library</div>
+                        </div>
+                        <div class="book-item book-owned">
+                            <div class="book-number">Book 3</div>
+                            <div class="book-title">Abaddon's Gate</div>
+                            <div class="book-date">✓ In Library</div>
+                        </div>
+                        <div class="book-item book-missing">
+                            <div class="book-number">Book 10</div>
+                            <div class="book-title">Memory's Legion</div>
+                            <div class="book-date">Available Now</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="book-series">
+                    <div class="series-header">
+                        <div class="series-title">The Witcher Series</div>
+                        <div class="series-count">
+                            <div class="count-item count-owned">📚 Owned: 5</div>
+                            <div class="count-item count-missing">📖 Missing: 3</div>
+                            <div class="count-item count-upcoming">⏳ Upcoming: 0</div>
+                        </div>
+                    </div>
+                    <div class="series-books">
+                        <div class="book-item book-owned">
+                            <div class="book-number">Book 1</div>
+                            <div class="book-title">The Last Wish</div>
+                            <div class="book-date">✓ In Library</div>
+                        </div>
+                        <div class="book-item book-owned">
+                            <div class="book-number">Book 2</div>
+                            <div class="book-title">Sword of Destiny</div>
+                            <div class="book-date">✓ In Library</div>
+                        </div>
+                        <div class="book-item book-missing">
+                            <div class="book-number">Book 6</div>
+                            <div class="book-title">The Tower of Swallows</div>
+                            <div class="book-date">Not in Library</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar View Tab Content -->
+            <div class="tab-content" data-content="calendar">
+                <div style="padding: 40px; text-align: center; color: var(--gray);">
+                    <h3>Calendar View</h3>
+                    <p>Monthly calendar with all releases will be implemented here</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-stats">
+                <div class="stat-item">📺 12 Shows</div>
+                <div class="stat-item">🎬 3 Movies</div>
+                <div class="stat-item">🎧 45 Books</div>
+                <div class="stat-item">📅 7 This Week</div>
+            </div>
+            <div>Last sync: 2 minutes ago • Time Zone: CET (Berlin)</div>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <h3>Settings</h3>
+            <button onclick="toggleSettings()">✕</button>
+        </div>
+        <div class="settings-content">
+            <div class="setting-group">
+                <div class="setting-label">API Keys</div>
+                <input type="password" class="setting-input" placeholder="TMDB API Key">
+                <input type="password" class="setting-input" placeholder="Audible API Key" style="margin-top: 8px;">
+            </div>
+            
+            <div class="setting-group">
+                <div class="setting-label">German VOD Services</div>
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="checkbox" checked> Netflix Germany
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" checked> Prime Video DE
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" checked> Disney+ Germany
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" checked> Sky Germany
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox"> WOW
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox"> RTL+
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox"> Paramount+
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-group">
+                <div class="setting-label">Notifications</div>
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="checkbox" checked> New Episodes
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" checked> New Book Releases
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox"> Price Drops
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if embedded in Notion
+        if (window.self !== window.top) {
+            document.body.classList.add('notion-embed-mode');
+        }
+
+        // Tab Navigation
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Update active tab
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update content
+                const tabName = this.dataset.tab;
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.querySelector(`[data-content="${tabName}"]`).classList.add('active');
+            });
+        });
+
+        // Filter functionality
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Update active filter
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const filter = this.dataset.filter;
+                const cards = document.querySelectorAll('.media-card, .timeline-item');
+                
+                cards.forEach(card => {
+                    if (filter === 'all') {
+                        card.style.display = '';
+                    } else {
+                        const service = card.dataset.service || 
+                                      card.querySelector('[class*="service-"]')?.className.match(/service-(\w+)/)?.[1];
+                        card.style.display = service === filter ? '' : 'none';
+                    }
+                });
+            });
+        });
+
+        // View Toggle
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                // View switching logic would go here
+            });
+        });
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const items = document.querySelectorAll('.media-card, .timeline-item, .book-series');
+            
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // Settings Panel
+        function toggleSettings() {
+            document.getElementById('settingsPanel').classList.toggle('open');
+        }
+
+        // Mock data loading
+        function loadData() {
+            // This would connect to your backend API
+            console.log('Loading data from API...');
+        }
+
+        // Auto-refresh every 5 minutes
+        setInterval(loadData, 300000);
+
+        // Initialize
+        loadData();
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && e.ctrlKey) {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+            if (e.key === 's' && e.ctrlKey) {
+                e.preventDefault();
+                toggleSettings();
+            }
+        });
+
+        // Handle responsive layout
+        function handleResponsive() {
+            const width = window.innerWidth;
+            if (width < 768) {
+                document.querySelector('.view-toggle').style.display = 'none';
+            } else {
+                document.querySelector('.view-toggle').style.display = 'flex';
+            }
+        }
+
+        window.addEventListener('resize', handleResponsive);
+        handleResponsive();
+
+        // Progressive Web App support
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
+
+        // Real-time updates via WebSocket (when backend is ready)
+        function connectWebSocket() {
+            // const ws = new WebSocket('ws://your-server:port');
+            // ws.onmessage = (event) => {
+            //     const data = JSON.parse(event.data);
+            //     updateUI(data);
+            // };
+        }
+
+        // Notion-specific optimizations
+        if (window.self !== window.top) {
+            // Reduce animations for better iframe performance
+            document.documentElement.style.setProperty('--animation-duration', '0.1s');
+            
+            // Send height to parent for dynamic resizing
+            function sendHeight() {
+                window.parent.postMessage({
+                    type: 'resize',
+                    height: document.body.scrollHeight
+                }, '*');
+            }
+            
+            // Monitor for content changes
+            const observer = new MutationObserver(sendHeight);
+            observer.observe(document.body, { childList: true, subtree: true });
+            
+            sendHeight();
+        }
+    </script>
+</body>
+</html>

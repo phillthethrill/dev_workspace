@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV Show Watchlist - Episode Release Calendar</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        .controls {
+            padding: 20px 30px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .filter-btn:hover {
+            border-color: #4f46e5;
+            color: #4f46e5;
+        }
+        .filter-btn.active {
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 14px;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+        .table-container {
+            overflow-x: auto;
+            max-height: 70vh;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        thead {
+            position: sticky;
+            top: 0;
+            background: #1e293b;
+            color: white;
+            z-index: 10;
+        }
+        th {
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        tr:hover {
+            background: #f1f5f9;
+        }
+        .service-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .apple-tv { background: #000; color: white; }
+        .netflix { background: #e50914; color: white; }
+        .disney { background: #113ccf; color: white; }
+        .crunchyroll { background: #ff6600; color: white; }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .airing { background: #10b981; color: white; }
+        .upcoming { background: #f59e0b; color: white; }
+        .completed { background: #6b7280; color: white; }
+        
+        .episode-info {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        
+        .date-cell {
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        
+        .today {
+            background: #fef3c7 !important;
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .past {
+            opacity: 0.7;
+        }
+        
+        .future {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .show-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        
+        .season-info {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        .footer {
+            padding: 20px 30px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-box {
+                min-width: unset;
+            }
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📺 TV Show Watchlist</h1>
+            <p>Complete Episode Release Calendar & Streaming Guide</p>
+        </div>
+        
+        <div class="controls">
+            <button class="filter-btn active" onclick="filterService('all')">All Shows</button>
+            <button class="filter-btn" onclick="filterService('apple-tv')">Apple TV+</button>
+            <button class="filter-btn" onclick="filterService('netflix')">Netflix</button>
+            <button class="filter-btn" onclick="filterService('disney')">Disney+</button>
+            <button class="filter-btn" onclick="filterService('crunchyroll')">Crunchyroll</button>
+            <input type="text" class="search-box" placeholder="Search shows, episodes, or dates..." onkeyup="searchTable()">
+        </div>
+        
+        <div class="table-container">
+            <table id="watchlistTable">
+                <thead>
+                    <tr>
+                        <th>Show</th>
+                        <th>Service</th>
+                        <th>Episode</th>
+                        <th>Release Date</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Foundation Season 3 -->
+                    <tr class="past" data-service="apple-tv">
+                        <td><div class="show-title">Foundation</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 1: "A Song for the End of Everything"</td>
+                        <td class="date-cell">July 11, 2025</td>
+                        <td><span class="status-badge completed">Aired</span></td>
+                        <td>Season premiere</td>
+                    </tr>
+                    <tr class="past" data-service="apple-tv">
+                        <td><div class="show-title">Foundation</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 2</td>
+                        <td class="date-cell">July 18, 2025</td>
+                        <td><span class="status-badge completed">Aired</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="past" data-service="apple-tv">
+                        <td><div class="show-title">Foundation</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 3</td>
+                        <td class="date-cell">July 25, 2025</td>
+                        <td><span class="status-badge completed">Aired</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="past" data-service="apple-tv">
+                        <td><div class="show-title">Foundation</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 4</td>
+                        <td class="date-cell">August 1, 2025</td>
+                        <td><span class="status-badge completed">Aired</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="past" data-service="apple-tv">
+                        <td><div class="show-title">Foundation</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 5</td>
+                        <td class="date-cell">August 8, 2025</td>
+                        <td><span class="status-badge completed">Aired</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="past" data-service="apple-tv">
+                        <td><div class="show-title">Foundation</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 6</td>
+                        <td class="date-cell">August 15, 2025</td>
+                        <td><span class="status-badge completed">Aired</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="today" data-service="apple-tv">
+                        <td><div class="show-title">Foundation</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 7</td>
+                        <td class="date-cell">August 22, 2025</td>
+                        <td><span class="status-badge airing">Today!</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Foundation</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 8</td>
+                        <td class="date-cell">August 29, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Foundation</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 9</td>
+                        <td class="date-cell">September 5, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Foundation</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 10</td>
+                        <td class="date-cell">September 12, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Season finale</td>
+                    </tr>
+                    
+                    <!-- Invasion Season 3 -->
+                    <tr class="today" data-service="apple-tv">
+                        <td><div class="show-title">Invasion (Infiltration)</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 1</td>
+                        <td class="date-cell">August 22, 2025</td>
+                        <td><span class="status-badge airing">Today!</span></td>
+                        <td>Season premiere</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Invasion (Infiltration)</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 2</td>
+                        <td class="date-cell">August 29, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Invasion (Infiltration)</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 3</td>
+                        <td class="date-cell">September 5, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Invasion (Infiltration)</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 4</td>
+                        <td class="date-cell">September 12, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Invasion (Infiltration)</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 5</td>
+                        <td class="date-cell">September 19, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Invasion (Infiltration)</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 6</td>
+                        <td class="date-cell">September 26, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Invasion (Infiltration)</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 7</td>
+                        <td class="date-cell">October 3, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Invasion (Infiltration)</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 8</td>
+                        <td class="date-cell">October 10, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Invasion (Infiltration)</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 9</td>
+                        <td class="date-cell">October 17, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Invasion (Infiltration)</div><div class="season-info">Season 3</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 10</td>
+                        <td class="date-cell">October 24, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Season finale</td>
+                    </tr>
+                    
+                    <!-- Silo Season 2 (Already completed) -->
+                    <tr class="past" data-service="apple-tv">
+                        <td><div class="show-title">Silo</div><div class="season-info">Season 2</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episodes 1-10</td>
+                        <td class="date-cell">Nov 15, 2024 - Jan 17, 2025</td>
+                        <td><span class="status-badge completed">Completed</span></td>
+                        <td>Season 3 coming 2026</td>
+                    </tr>
+                    
+                    <!-- Severance Season 2 -->
+                    <tr class="past" data-service="apple-tv">
+                        <td><div class="show-title">Severance</div><div class="season-info">Season 2</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episodes 1-7</td>
+                        <td class="date-cell">Jan 17 - Feb 28, 2025</td>
+                        <td><span class="status-badge completed">Aired</span></td>
+                        <td>Weekly Friday releases</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Severance</div><div class="season-info">Season 2</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 8</td>
+                        <td class="date-cell">March 7, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Severance</div><div class="season-info">Season 2</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 9</td>
+                        <td class="date-cell">March 14, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Friday release</td>
+                    </tr>
+                    <tr class="future" data-service="apple-tv">
+                        <td><div class="show-title">Severance</div><div class="season-info">Season 2</div></td>
+                        <td><span class="service-badge apple-tv">Apple TV+</span></td>
+                        <td>Episode 10</td>
+                        <td class="date-cell">March 21, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Season finale - Season 3 renewed!</td>
+                    </tr>
+                    
+                    <!-- Sakamoto Days -->
+                    <tr class="past" data-service="netflix">
+                        <td><div class="show-title">Sakamoto Days</div><div class="season-info">Season 1 Part 1</div></td>
+                        <td><span class="service-badge netflix">Netflix</span></td>
+                        <td>Episodes 1-11</td>
+                        <td class="date-cell">Jan 11 - Mar 22, 2025</td>
+                        <td><span class="status-badge completed">Completed</span></td>
+                        <td>Weekly Saturday releases</td>
+                    </tr>
+                    <tr class="past" data-service="netflix">
+                        <td><div class="show-title">Sakamoto Days</div><div class="season-info">Season 1 Part 2</div></td>
+                        <td><span class="service-badge netflix">Netflix</span></td>
+                        <td>Episodes 12-17</td>
+                        <td class="date-cell">Jul 14 - Aug 18, 2025</td>
+                        <td><span class="status-badge completed">Aired</span></td>
+                        <td>Weekly Monday releases</td>
+                    </tr>
+                    <tr class="future" data-service="netflix">
+                        <td><div class="show-title">Sakamoto Days</div><div class="season-info">Season 1 Part 2</div></td>
+                        <td><span class="service-badge netflix">Netflix</span></td>
+                        <td>Episode 18</td>
+                        <td class="date-cell">August 25, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Monday release</td>
+                    </tr>
+                    <tr class="future" data-service="netflix">
+                        <td><div class="show-title">Sakamoto Days</div><div class="season-info">Season 1 Part 2</div></td>
+                        <td><span class="service-badge netflix">Netflix</span></td>
+                        <td>Episode 19</td>
+                        <td class="date-cell">September 1, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Monday release</td>
+                    </tr>
+                    <tr class="future" data-service="netflix">
+                        <td><div class="show-title">Sakamoto Days</div><div class="season-info">Season 1 Part 2</div></td>
+                        <td><span class="service-badge netflix">Netflix</span></td>
+                        <td>Episode 20</td>
+                        <td class="date-cell">September 8, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Monday release</td>
+                    </tr>
+                    <tr class="future" data-service="netflix">
+                        <td><div class="show-title">Sakamoto Days</div><div class="season-info">Season 1 Part 2</div></td>
+                        <td><span class="service-badge netflix">Netflix</span></td>
+                        <td>Episode 21</td>
+                        <td class="date-cell">September 15, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Monday release</td>
+                    </tr>
+                    <tr class="future" data-service="netflix">
+                        <td><div class="show-title">Sakamoto Days</div><div class="season-info">Season 1 Part 2</div></td>
+                        <td><span class="service-badge netflix">Netflix</span></td>
+                        <td>Episode 22</td>
+                        <td class="date-cell">September 22, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Season finale</td>
+                    </tr>
+                    
+                    <!-- Happy Gilmore 2 -->
+                    <tr class="future" data-service="netflix">
+                        <td><div class="show-title">Happy Gilmore 2</div><div class="season-info">Movie</div></td>
+                        <td><span class="service-badge netflix">Netflix</span></td>
+                        <td>Full Movie</td>
+                        <td class="date-cell">TBA 2025</td>
+                        <td><span class="status-badge upcoming">Coming Soon</span></td>
+                        <td>Adam Sandler sequel film</td>
+                    </tr>
+                    
+                    <!-- Pantheon Season 1 -->
+                    <tr class="future" data-service="netflix">
+                        <td><div class="show-title">Pantheon</div><div class="season-info">Season 1</div></td>
+                        <td><span class="service-badge netflix">Netflix</span></td>
+                        <td>Episodes 1-8</td>
+                        <td class="date-cell">Available Now</td>
+                        <td><span class="status-badge airing">Ready to Watch</span></td>
+                        <td>Full season available</td>
+                    </tr>
+                    
+                    <!-- Alien: Earth -->
+                    <tr class="future" data-service="disney">
+                        <td><div class="show-title">Alien: Earth</div><div class="season-info">Season 1</div></td>
+                        <td><span class="service-badge disney">Disney+</span></td>
+                        <td>TBA</td>
+                        <td class="date-cell">2025</td>
+                        <td><span class="status-badge upcoming">Coming Soon</span></td>
+                        <td>Alien prequel series</td>
+                    </tr>
+                    
+                    <!-- Dandadan Season 2 -->
+                    <tr class="past" data-service="crunchyroll">
+                        <td><div class="show-title">Dandadan</div><div class="season-info">Season 2</div></td>
+                        <td><span class="service-badge crunchyroll">Crunchyroll</span></td>
+                        <td>Episodes 1-8</td>
+                        <td class="date-cell">Jul 3 - Aug 21, 2025</td>
+                        <td><span class="status-badge completed">Aired</span></td>
+                        <td>Weekly Thursday releases</td>
+                    </tr>
+                    <tr class="future" data-service="crunchyroll">
+                        <td><div class="show-title">Dandadan</div><div class="season-info">Season 2</div></td>
+                        <td><span class="service-badge crunchyroll">Crunchyroll</span></td>
+                        <td>Episode 9</td>
+                        <td class="date-cell">August 28, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Thursday release</td>
+                    </tr>
+                    <tr class="future" data-service="crunchyroll">
+                        <td><div class="show-title">Dandadan</div><div class="season-info">Season 2</div></td>
+                        <td><span class="service-badge crunchyroll">Crunchyroll</span></td>
+                        <td>Episode 10</td>
+                        <td class="date-cell">September 4, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Thursday release</td>
+                    </tr>
+                    <tr class="future" data-service="crunchyroll">
+                        <td><div class="show-title">Dandadan</div><div class="season-info">Season 2</div></td>
+                        <td><span class="service-badge crunchyroll">Crunchyroll</span></td>
+                        <td>Episode 11</td>
+                        <td class="date-cell">September 11, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Weekly Thursday release</td>
+                    </tr>
+                    <tr class="future" data-service="crunchyroll">
+                        <td><div class="show-title">Dandadan</div><div class="season-info">Season 2</div></td>
+                        <td><span class="service-badge crunchyroll">Crunchyroll</span></td>
+                        <td>Episode 12</td>
+                        <td class="date-cell">September 18, 2025</td>
+                        <td><span class="status-badge upcoming">Upcoming</span></td>
+                        <td>Season finale</td>
+                    </tr>
+                    
+                    <!-- Other Crunchyroll Shows -->
+                    <tr class="future" data-service="crunchyroll">
+                        <td><div class="show-title">Failure Frame</div><div class="season-info">Season 1</div></td>
+                        <td><span class="service-badge crunchyroll">Crunchyroll</span></td>
+                        <td>TBA</td>
+                        <td class="date-cell">TBA 2025</td>
+                        <td><span class="status-badge upcoming">Coming Soon</span></td>
+                        <td>Isekai anime</td>
+                    </tr>
+                    
+                    <tr class="future" data-service="crunchyroll">
+                        <td><div class="show-title">Lot of Mysteries</div><div class="season-info">Season 1</div></td>
+                        <td><span class="service-badge crunchyroll">Crunchyroll</span></td>
+                        <td>TBA</td>
+                        <td class="date-cell">TBA 2025</td>
+                        <td><span class="status-badge upcoming">Coming Soon</span></td>
+                        <td>Mystery anime series</td>
+                    </tr>
+                    
+                    <tr class="future" data-service="crunchyroll">
+                        <td><div class="show-title">Shangri La Frontier</div><div class="season-info">Season 2</div></td>
+                        <td><span class="service-badge crunchyroll">Crunchyroll</span></td>
+                        <td>TBA</td>
+                        <td class="date-cell">Fall 2025</td>
+                        <td><span class="status-badge upcoming">Coming Soon</span></td>
+                        <td>Gaming anime continuation</td>
+                    </tr>
+                    
+                    <tr class="future" data-service="crunchyroll">
+                        <td><div class="show-title">Kaiju No. 8</div><div class="season-info">Season 2</div></td>
+                        <td><span class="service-badge crunchyroll">Crunchyroll</span></td>
+                        <td>TBA</td>
+                        <td class="date-cell">2025</td>
+                        <td><span class="status-badge upcoming">Coming Soon</span></td>
+                        <td>Kaiju action anime</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="footer">
+            <p>📅 Last updated: August 22, 2025 | 🎬 Total shows tracked: 12 | ⏰ Next episode releases calculated in your timezone</p>
+            <p>💡 Pro tip: Click on service badges to filter by streaming platform!</p>
+        </div>
+    </div>
+
+    <script>
+        // Filter functionality
+        function filterService(service) {
+            const rows = document.querySelectorAll('#watchlistTable tbody tr');
+            const buttons = document.querySelectorAll('.filter-btn');
+            
+            // Update active button
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Filter rows
+            rows.forEach(row => {
+                if (service === 'all') {
+                    row.style.display = '';
+                } else {
+                    const rowService = row.dataset.service;
+                    row.style.display = rowService === service ? '' : 'none';
+                }
+            });
+        }
+        
+        // Search functionality
+        function searchTable() {
+            const input = document.querySelector('.search-box');
+            const filter = input.value.toLowerCase();
+            const rows = document.querySelectorAll('#watchlistTable tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+        
+        // Add click handlers for service badges
+        document.addEventListener('DOMContentLoaded', function() {
+            const badges = document.querySelectorAll('.service-badge');
+            badges.forEach(badge => {
+                badge.style.cursor = 'pointer';
+                badge.addEventListener('click', function() {
+                    const service = this.classList[1]; // Gets the service class name
+                    
+                    // Update filter buttons
+                    const buttons = document.querySelectorAll('.filter-btn');
+                    buttons.forEach(btn => btn.classList.remove('active'));
+                    
+                    const targetBtn = document.querySelector(`[onclick="filterService('${service}')"]`);
+                    if (targetBtn) targetBtn.classList.add('active');
+                    
+                    filterService(service);
+                });
+            });
+            
+            // Auto-scroll to today's episodes
+            const todayRows = document.querySelectorAll('.today');
+            if (todayRows.length > 0) {
+                todayRows[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+        
+        // Update status based on current date
+        function updateStatus() {
+            const today = new Date();
+            const rows = document.querySelectorAll('#watchlistTable tbody tr');
+            
+            rows.forEach(row => {
+                const dateCell = row.querySelector('.date-cell');
+                const statusBadge = row.querySelector('.status-badge');
+                
+                if (dateCell && statusBadge) {
+                    const dateText = dateCell.textContent;
+                    const rowDate = new Date(dateText);
+                    
+                    // Only update if it's a specific date (not ranges or TBA)
+                    if (!isNaN(rowDate)) {
+                        const diffTime = rowDate - today;
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        row.classList.remove('past', 'today', 'future');
+                        
+                        if (diffDays < 0) {
+                            row.classList.add('past');
+                            if (statusBadge.textContent !== 'Completed') {
+                                statusBadge.textContent = 'Aired';
+                                statusBadge.className = 'status-badge completed';
+                            }
+                        } else if (diffDays === 0) {
+                            row.classList.add('today');
+                            statusBadge.textContent = 'Today!';
+                            statusBadge.className = 'status-badge airing';
+                        } else {
+                            row.classList.add('future');
+                            if (statusBadge.textContent !== 'Coming Soon' && statusBadge.textContent !== 'Ready to Watch') {
+                                statusBadge.textContent = 'Upcoming';
+                                statusBadge.className = 'status-badge upcoming';
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize
+        updateStatus();
+        
+        // Update every hour
+        setInterval(updateStatus, 3600000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "name": "universal-media-tracker",
+  "version": "1.0.0",
+  "description": "Production-ready media tracker for TV shows, movies, and audiobooks with German VOD focus",
+  "private": true,
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "install:all": "npm install",
+    "build": "npm run build --workspace=server && npm run build --workspace=web",
+    "start": "npm run start --workspace=server",
+    "dev": "npm run dev --workspace=server",
+    "docker:build": "docker build -t media-tracker .",
+    "docker:run": "docker run -p 3000:3000 -v ./data:/app/data media-tracker",
+    "test": "npm run test --workspace=server"
+  },
+  "keywords": [
+    "media-tracker",
+    "tmdb",
+    "audible",
+    "notion",
+    "docker",
+    "unraid"
+  ],
+  "author": "Kilo Code",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

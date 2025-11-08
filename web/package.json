@@ -1,0 +1,19 @@
+{
+  "name": "@universal-media-tracker/web",
+  "version": "1.0.0",
+  "description": "Frontend web interface for Universal Media Tracker",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'No build step required for vanilla HTML/CSS/JS'",
+    "start": "echo 'Serve via main server'",
+    "dev": "echo 'Open index.html in browser or use live server extension'"
+  },
+  "keywords": [
+    "media-tracker",
+    "frontend",
+    "notion-embed",
+    "vanilla-js"
+  ],
+  "author": "Kilo Code",
+  "license": "MIT"
+}

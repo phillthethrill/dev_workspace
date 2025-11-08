@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>MediaTracker</Name>
+  <Repository>your-registry/media-tracker:latest</Repository>
+  <Registry>https://hub.docker.com/</Registry>
+  <Network>bridge</Network>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/your-repo/media-tracker</Support>
+  <Project>https://github.com/your-repo/media-tracker</Project>
+  <Overview>
+    Universal Media Tracker for TV shows, movies, and audiobooks with German VOD focus.
+    Features automatic episode tracking, German streaming service availability,
+    Audible library integration, and Notion embed support.
+  </Overview>
+  <Category>Productivity: MediaApp:Other</Category>
+  <WebUI>http://[IP]:[PORT:3000]</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/your-repo/media-tracker/main/my-MediaTracker.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/your-repo/media-tracker/main/icon.png</Icon>
+  <ExtraParams>--restart=unless-stopped</ExtraParams>
+
+  <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="Container Variable: PUID" Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Container Variable: PGID" Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
+
+  <Config Name="Port" Target="3000" Default="3000" Mode="tcp" Description="Container Port: 3000" Type="Port" Display="always" Required="true" Mask="false">3000</Config>
+
+  <Config Name="TMDB_API_KEY" Target="TMDB_API_KEY" Default="" Mode="" Description="Container Variable: TMDB API Key (required)" Type="Variable" Display="always" Required="true" Mask="true"></Config>
+  <Config Name="AUDIBLE_LIBRARY_PATH" Target="AUDIBLE_LIBRARY_PATH" Default="./data/audible_library.xlsx" Mode="" Description="Container Variable: Path to Audible library Excel file" Type="Variable" Display="always" Required="false" Mask="false">./data/audible_library.xlsx</Config>
+
+  <Config Name="Data" Target="/app/data" Default="/mnt/user/appdata/MediaTracker" Mode="rw" Description="Container Path: /app/data" Type="Path" Display="advanced" Required="true" Mask="false">/mnt/user/appdata/MediaTracker</Config>
+  <Config Name="Public" Target="/app/public" Default="" Mode="ro" Description="Container Path: /app/public (optional - for custom web assets)" Type="Path" Display="advanced" Required="false" Mask="false"></Config>
+
+  <Config Name="TZ" Target="TZ" Default="Europe/Berlin" Mode="" Description="Container Variable: TZ" Type="Variable" Display="advanced" Required="false" Mask="false">Europe/Berlin</Config>
+  <Config Name="NODE_ENV" Target="NODE_ENV" Default="production" Mode="" Description="Container Variable: NODE_ENV" Type="Variable" Display="advanced" Required="false" Mask="false">production</Config>
+</Container>
