@@ -77,6 +77,7 @@ export interface TMDBShow {
       };
     };
   };
+  german_services?: string[];
 }
 
 export interface TMDBMovie {

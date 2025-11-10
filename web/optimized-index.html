@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Media Tracker - Optimized</title>
+    
+    <!-- Performance optimizations -->
+    <link rel="preconnect" href="https://api.themoviedb.org">
+    <link rel="preconnect" href="https://image.tmdb.org">
+    <link rel="dns-prefetch" href="https://www.justwatch.com">
+    
+    <!-- Critical CSS inlined -->
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --medium: #475569;
+            --light: #f1f5f9;
+            --white: #ffffff;
+            --gray: #64748b;
+            --border: #e2e8f0;
+            
+            /* Service colors */
+            --netflix: #e50914;
+            --prime: #00a8e1;
+            --disney: #113ccf;
+            --apple: #000000;
+            --sky: #0072c9;
+            --paramount: #0064ff;
+            --audible: #ff9900;
+            --crunchyroll: #ff6600;
+            --wow: #e5007e;
+            --rtl: #ff0000;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 25px 30px;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .header-subtitle {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+        
+        .sync-status {
+            position: absolute;
+            top: 25px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        
+        .sync-indicator {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    
+    <!-- Additional styles loaded asynchronously -->
+    <link rel="preload" href="styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css"></noscript>
+</head>
+<body>
+    <div class="container" id="app">
+        <div class="header">
+            <h1>📺 Universal Media Tracker</h1>
+            <div class="header-subtitle">TV Shows • Movies • Audiobooks | Germany VOD</div>
+            <div class="sync-status">
+                <div class="sync-indicator" id="syncIndicator"></div>
+                <span id="syncStatus">Live Sync</span>
+            </div>
+        </div>
+        
+        <div class="tabs" id="tabs">
+            <button class="tab active" data-tab="upcoming">
+                📅 Upcoming
+                <span class="tab-badge" id="upcomingBadge">0</span>
+            </button>
+            <button class="tab" data-tab="shows">
+                📺 TV Shows
+                <span class="tab-badge" id="showsBadge">0</span>
+            </button>
+            <button class="tab" data-tab="movies">
+                🎬 Movies
+                <span class="tab-badge" id="moviesBadge">0</span>
+            </button>
+            <button class="tab" data-tab="audiobooks">
+                🎧 Audiobooks
+                <span class="tab-badge" id="audiobooksBadge">0</span>
+            </button>
+            <button class="tab" data-tab="calendar">
+                📆 Calendar View
+            </button>
+        </div>
+        
+        <div class="controls" id="controls">
+            <input type="text" class="search-box" placeholder="Search titles, episodes, books..." id="searchInput" autocomplete="off">
+            
+            <div class="filter-group" id="serviceFilters">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="netflix">Netflix</button>
+                <button class="filter-btn" data-filter="prime">Prime</button>
+                <button class="filter-btn" data-filter="disney">Disney+</button>
+                <button class="filter-btn" data-filter="sky">Sky</button>
+                <button class="filter-btn" data-filter="apple">Apple TV+</button>
+                <button class="filter-btn" data-filter="audible">Audible</button>
+            </div>
+            
+            <div class="view-toggle">
+                <button class="view-btn active" data-view="grid">Grid</button>
+                <button class="view-btn" data-view="list">List</button>
+                <button class="view-btn" data-view="timeline">Timeline</button>
+            </div>
+        </div>
+        
+        <div class="content" id="content">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+        
+        <div class="footer" id="footer">
+            <div class="footer-stats" id="footerStats">
+                <div class="stat-item">📺 <span id="showsCount">0</span> Shows</div>
+                <div class="stat-item">🎬 <span id="moviesCount">0</span> Movies</div>
+                <div class="stat-item">🎧 <span id="audiobooksCount">0</span> Books</div>
+                <div class="stat-item">📅 <span id="upcomingCount">0</span> This Week</div>
+            </div>
+            <div>Last sync: <span id="lastSync">checking...</span> • Time Zone: CET (Berlin)</div>
+        </div>
+    </div>
+    
+    <!-- Lazy load settings panel -->
+    <div class="settings-panel" id="settingsPanel" aria-hidden="true">
+        <div class="settings-header">
+            <h3>Settings</h3>
+            <button onclick="window.MediaTracker.toggleSettings()" aria-label="Close settings">✕</button>
+        </div>
+        <div class="settings-content">
+            <!-- Settings content will be loaded dynamically -->
+        </div>
+    </div>
+    
+    <!-- Performance optimized script -->
+    <script>
+        // Global configuration
+        const CONFIG = {
+            API_BASE: window.location.origin,
+            CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
+            REFRESH_INTERVAL: 5 * 60 * 1000, // 5 minutes
+            LAZY_LOAD_THRESHOLD: 100,
+            DEBOUNCE_DELAY: 300,
+            MAX_CONCURRENT_REQUESTS: 5,
+            REQUEST_TIMEOUT: 10000,
+            PERFORMANCE_MONITORING: true
+        };
+        
+        // Performance monitoring
+        const performanceMonitor = {
+            metrics: {
+                loadTime: performance.now(),
+                firstPaint: null,
+                firstContentfulPaint: null,
+                domContentLoaded: null,
+                resourceTimings: []
+            },
+            
+            init() {
+                // Track first paint
+                if ('PerformanceObserver' in window) {
+                    const observer = new PerformanceObserver((list) => {
+                        for (const entry of list.getEntries()) {
+                            if (entry.name === 'first-paint') {
+                                this.metrics.firstPaint = entry.startTime;
+                            }
+                            if (entry.name === 'first-contentful-paint') {
+                                this.metrics.firstContentfulPaint = entry.startTime;
+                            }
+                        }
+                    });
+                    
+                    observer.observe({ entryTypes: ['paint'] });
+                }
+                
+                // Track DOM content loaded
+                document.addEventListener('DOMContentLoaded', () => {
+                    this.metrics.domContentLoaded = performance.now() - this.metrics.loadTime;
+                });
+                
+                // Track resource timings
+                if ('PerformanceObserver' in window) {
+                    const resourceObserver = new PerformanceObserver((list) => {
+                        for (const entry of list.getEntries()) {
+                            this.metrics.resourceTimings.push({
+                                name: entry.name,
+                                duration: entry.duration,
+                                transferSize: entry.transferSize,
+                                initiatorType: entry.initiatorType
+                            });
+                        }
+                    });
+                    
+                    resourceObserver.observe({ entryTypes: ['resource'] });
+                }
+            },
+            
+            trackApiCall(url, duration, success) {
+                if (!CONFIG.PERFORMANCE_MONITORING) return;
+                
+                console.log(`API Call: ${url} - ${duration}ms - ${success ? 'success' : 'error'}`);
+                
+                // Send to backend metrics endpoint
+                if (window.fetch && navigator.sendBeacon) {
+                    navigator.sendBeacon('/api/metrics', JSON.stringify({
+                        type: 'api_call',
+                        url,
+                        duration,
+                        success,
+                        timestamp: Date.now()
+                    }));
+                }
+            }
+        };
+        
+        // Virtual scroll for large lists
+        class VirtualScroll {
+            constructor(container, itemHeight, renderItem) {
+                this.container = container;
+                this.itemHeight = itemHeight;
+                this.renderItem = renderItem;
+                this.items = [];
+                this.visibleRange = { start: 0, end: 0 };
+                this.containerHeight = 0;
+                
+                this.init();
+            }
+            
+            init() {
+                this.container.addEventListener('scroll', this.throttle(() => {
+                    this.updateVisibleRange();
+                    this.renderVisibleItems();
+                }, 16)); // 60fps
+                
+                window.addEventListener('resize', this.debounce(() => {
+                    this.updateDimensions();
+                }, 250));
+                
+                this.updateDimensions();
+            }
+            
+            setItems(items) {
+                this.items = items;
+                this.updateDimensions();
+                this.renderVisibleItems();
+            }
+            
+            updateDimensions() {
+                this.containerHeight = this.container.clientHeight;
+                const totalHeight = this.items.length * this.itemHeight;
+                this.container.style.height = totalHeight + 'px';
+                this.updateVisibleRange();
+            }
+            
+            updateVisibleRange() {
+                const scrollTop = this.container.scrollTop;
+                const startIndex = Math.floor(scrollTop / this.itemHeight);
+                const endIndex = Math.min(
+                    this.items.length,
+                    Math.ceil((scrollTop + this.containerHeight) / this.itemHeight) + 5
+                );
+                
+                this.visibleRange = { start: startIndex, end: endIndex };
+            }
+            
+            renderVisibleItems() {
+                const { start, end } = this.visibleRange;
+                const offsetY = start * this.itemHeight;
+                
+                let html = '';
+                for (let i = start; i < end; i++) {
+                    html += this.renderItem(this.items[i], i);
+                }
+                
+                this.container.innerHTML = html;
+                this.container.style.transform = `translateY(${offsetY}px)`;
+            }
+            
+            throttle(func, limit) {
+                let inThrottle;
+                return function() {
+                    const args = arguments;
+                    const context = this;
+                    if (!inThrottle) {
+                        func.apply(context, args);
+                        inThrottle = true;
+                        setTimeout(() => inThrottle = false, limit);
+                    }
+                };
+            }
+            
+            debounce(func, wait) {
+                let timeout;
+                return function() {
+                    const context = this, args = arguments;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), wait);
+                };
+            }
+        }
+        
+        // Optimized API client with request pooling
+        class ApiClient {
+            constructor() {
+                this.requestQueue = [];
+                this.activeRequests = 0;
+                this.maxConcurrent = CONFIG.MAX_CONCURRENT_REQUESTS;
+                this.requestCache = new Map();
+            }
+            
+            async request(url, options = {}) {
+                const cacheKey = `${url}_${JSON.stringify(options)}`;
+                const cached = this.requestCache.get(cacheKey);
+                
+                if (cached && Date.now() - cached.timestamp < CONFIG.CACHE_DURATION) {
+                    return cached.data;
+                }
+                
+                return new Promise((resolve, reject) => {
+                    this.requestQueue.push({
+                        url,
+                        options: { ...options, timeout: CONFIG.REQUEST_TIMEOUT },
+                        resolve,
+                        reject
+                    });
+                    
+                    this.processQueue();
+                });
+            }
+            
+            async processQueue() {
+                if (this.activeRequests >= this.maxConcurrent || this.requestQueue.length === 0) {
+                    return;
+                }
+                
+                const request = this.requestQueue.shift();
+                this.activeRequests++;
+                
+                const startTime = performance.now();
+                const timeoutId = setTimeout(() => {
+                    this.activeRequests--;
+                    request.reject(new Error('Request timeout'));
+                }, request.options.timeout);
+                
+                try {
+                    const response = await fetch(`${CONFIG.API_BASE}${request.url}`, request.options);
+                    const data = await response.json();
+                    
+                    clearTimeout(timeoutId);
+                    this.activeRequests--;
+                    
+                    // Cache successful responses
+                    if (response.ok) {
+                        this.requestCache.set(
+                            `${request.url}_${JSON.stringify(request.options)}`,
+                            { data, timestamp: Date.now() }
+                        );
+                    }
+                    
+                    const duration = performance.now() - startTime;
+                    performanceMonitor.trackApiCall(request.url, duration, response.ok);
+                    
+                    if (response.ok) {
+                        request.resolve(data);
+                    } else {
+                        request.reject(new Error(`HTTP ${response.status}: ${data.error || 'Unknown error'}`));
+                    }
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    this.activeRequests--;
+                    
+                    const duration = performance.now() - startTime;
+                    performanceMonitor.trackApiCall(request.url, duration, false);
+                    
+                    request.reject(error);
+                }
+                
+                this.processQueue();
+            }
+        }
+        
+        // Optimized state management
+        class StateManager {
+            constructor() {
+                this.state = {
+                    currentTab: 'upcoming',
+                    currentView: 'grid',
+                    currentFilter: 'all',
+                    searchQuery: '',
+                    data: {
+                        upcoming: [],
+                        shows: [],
+                        movies: [],
+                        audiobooks: []
+                    },
+                    lastSync: null,
+                    isLoading: false,
+                    error: null
+                };
+                
+                this.listeners = new Map();
+            }
+            
+            getState() {
+                return { ...this.state };
+            }
+            
+            setState(updates) {
+                const prevState = { ...this.state };
+                this.state = { ...this.state, ...updates };
+                
+                this.notifyListeners(prevState, this.state);
+            }
+            
+            subscribe(listener) {
+                const id = Math.random().toString(36).substr(2, 9);
+                this.listeners.set(id, listener);
+                
+                return () => this.listeners.delete(id);
+            }
+            
+            notifyListeners(prevState, newState) {
+                for (const listener of this.listeners.values()) {
+                    try {
+                        listener(prevState, newState);
+                    } catch (error) {
+                        console.error('State listener error:', error);
+                    }
+                }
+            }
+        }
+        
+        // Optimized main application
+        class MediaTrackerApp {
+            constructor() {
+                this.api = new ApiClient();
+                this.state = new StateManager();
+                this.elements = {};
+                this.virtualScroll = null;
+                this.refreshTimer = null;
+                this.lastActivity = Date.now();
+                
+                this.init();
+            }
+            
+            async init() {
+                this.cacheElements();
+                this.bindEvents();
+                this.setupIntersectionObserver();
+                this.initVirtualScroll();
+                
+                // Initialize performance monitoring
+                performanceMonitor.init();
+                
+                // Load initial data
+                await this.loadData();
+                
+                // Setup auto-refresh
+                this.setupAutoRefresh();
+                
+                // Setup activity tracking
+                this.setupActivityTracking();
+                
+                this.updateUI();
+            }
+            
+            cacheElements() {
+                this.elements = {
+                    content: document.getElementById('content'),
+                    tabs: document.getElementById('tabs'),
+                    searchInput: document.getElementById('searchInput'),
+                    syncIndicator: document.getElementById('syncIndicator'),
+                    syncStatus: document.getElementById('syncStatus'),
+                    lastSync: document.getElementById('lastSync'),
+                    badges: {
+                        upcoming: document.getElementById('upcomingBadge'),
+                        shows: document.getElementById('showsBadge'),
+                        movies: document.getElementById('moviesBadge'),
+                        audiobooks: document.getElementById('audiobooksBadge')
+                    },
+                    counts: {
+                        shows: document.getElementById('showsCount'),
+                        movies: document.getElementById('moviesCount'),
+                        audiobooks: document.getElementById('audiobooksCount'),
+                        upcoming: document.getElementById('upcomingCount')
+                    }
+                };
+            }
+            
+            bindEvents() {
+                // Tab navigation with event delegation
+                this.elements.tabs.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('tab')) {
+                        const tab = e.target.dataset.tab;
+                        this.setActiveTab(tab);
+                    }
+                });
+                
+                // Search with debouncing
+                this.elements.searchInput.addEventListener('input', 
+                    this.debounce((e) => {
+                        this.state.setState({ searchQuery: e.target.value.toLowerCase() });
+                        this.updateUI();
+                    }, CONFIG.DEBOUNCE_DELAY)
+                );
+                
+                // Service filters with event delegation
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('filter-btn')) {
+                        this.setActiveFilter(e.target.dataset.filter);
+                    }
+                    
+                    if (e.target.classList.contains('view-btn')) {
+                        this.setActiveView(e.target.dataset.view);
+                    }
+                });
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === '/' && e.ctrlKey) {
+                        e.preventDefault();
+                        this.elements.searchInput.focus();
+                    }
+                    
+                    if (e.key === 's' && e.ctrlKey) {
+                        e.preventDefault();
+                        this.toggleSettings();
+                    }
+                });
+            }
+            
+            setupIntersectionObserver() {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const element = entry.target;
+                            const dataSrc = element.dataset.src;
+                            if (dataSrc) {
+                                element.src = dataSrc;
+                                element.removeAttribute('data-src');
+                            }
+                        }
+                    });
+                }, {
+                    rootMargin: '50px'
+                });
+                
+                // Store observer for later use
+                this.imageObserver = observer;
+            }
+            
+            initVirtualScroll() {
+                // Initialize virtual scroll for content when needed
+                this.virtualScroll = new VirtualScroll(
+                    this.elements.content,
+                    200, // item height
+                    (item, index) => this.renderItem(item, index)
+                );
+            }
+            
+            async loadData() {
+                this.state.setState({ isLoading: true, error: null });
+                
+                try {
+                    const [upcoming, shows, movies, audiobooks] = await Promise.allSettled([
+                        this.api.request('/api/upcoming'),
+                        this.api.request('/api/shows'),
+                        this.api.request('/api/audiobooks/series'),
+                        this.api.request('/api/audiobooks/missing')
+                    ]);
+                    
+                    const data = {
+                        upcoming: upcoming.status === 'fulfilled' ? upcoming.value : [],
+                        shows: shows.status === 'fulfilled' ? shows.value : [],
+                        movies: movies.status === 'fulfilled' ? movies.value : [],
+                        audiobooks: audiobooks.status === 'fulfilled' ? audiobooks.value : []
+                    };
+                    
+                    this.state.setState({
+                        data,
+                        lastSync: new Date(),
+                        isLoading: false
+                    });
+                    
+                    this.updateBadges();
+                    this.updateUI();
+                    
+                } catch (error) {
+                    console.error('Failed to load data:', error);
+                    this.state.setState({
+                        error: error.message,
+                        isLoading: false
+                    });
+                }
+            }
+            
+            updateBadges() {
+                const { data } = this.state.getState();
+                
+                this.elements.badges.upcoming.textContent = data.upcoming.length;
+                this.elements.badges.shows.textContent = data.shows.length;
+                this.elements.badges.movies.textContent = data.movies.length;
+                this.elements.badges.audiobooks.textContent = data.audiobooks.length;
+                
+                this.elements.counts.shows.textContent = data.shows.length;
+                this.elements.counts.movies.textContent = data.movies.length;
+                this.elements.counts.audiobooks.textContent = data.audiobooks.length;
+                this.elements.counts.upcoming.textContent = data.upcoming.length;
+            }
+            
+            setActiveTab(tab) {
+                this.state.setState({ currentTab: tab });
+                
+                // Update active tab
+                document.querySelectorAll('.tab').forEach(t => 
+                    t.classList.toggle('active', t.dataset.tab === tab)
+                );
+                
+                this.updateUI();
+            }
+            
+            setActiveFilter(filter) {
+                this.state.setState({ currentFilter: filter });
+                
+                // Update active filter
+                document.querySelectorAll('.filter-btn').forEach(f => 
+                    f.classList.toggle('active', f.dataset.filter === filter)
+                );
+                
+                this.updateUI();
+            }
+            
+            setActiveView(view) {
+                this.state.setState({ currentView: view });
+                
+                // Update active view
+                document.querySelectorAll('.view-btn').forEach(v => 
+                    v.classList.toggle('active', v.dataset.view === view)
+                );
+                
+                this.updateUI();
+            }
+            
+            updateUI() {
+                const state = this.state.getState();
+                
+                if (state.isLoading) {
+                    this.showLoading();
+                    return;
+                }
+                
+                if (state.error) {
+                    this.showError(state.error);
+                    return;
+                }
+                
+                const filteredData = this.getFilteredData();
+                this.renderContent(filteredData);
+                this.updateLastSync();
+                this.updateSyncStatus();
+            }
+            
+            getFilteredData() {
+                const state = this.state.getState();
+                const { searchQuery, currentFilter } = state;
+                let data = [];
+                
+                switch (state.currentTab) {
+                    case 'upcoming':
+                        data = state.data.upcoming;
+                        break;
+                    case 'shows':
+                        data = state.data.shows;
+                        break;
+                    case 'movies':
+                        data = state.data.movies;
+                        break;
+                    case 'audiobooks':
+                        data = state.data.audiobooks;
+                        break;
+                    default:
+                        data = [];
+                }
+                
+                // Apply search filter
+                if (searchQuery) {
+                    data = data.filter(item => {
+                        const searchable = `${item.title} ${item.service || ''}`.toLowerCase();
+                        return searchable.includes(searchQuery);
+                    });
+                }
+                
+                // Apply service filter
+                if (currentFilter !== 'all') {
+                    data = data.filter(item => {
+                        const service = item.service || '';
+                        return service === currentFilter;
+                    });
+                }
+                
+                return data;
+            }
+            
+            renderContent(data) {
+                if (data.length === 0) {
+                    this.elements.content.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: var(--gray);">
+                            <h3>No items found</h3>
+                            <p>Try adjusting your search or filter criteria</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Use virtual scroll for large datasets
+                if (data.length > CONFIG.LAZY_LOAD_THRESHOLD) {
+                    this.virtualScroll.setItems(data);
+                    return;
+                }
+                
+                // Regular rendering for smaller datasets
+                let html = '';
+                if (this.state.getState().currentView === 'timeline') {
+                    html = this.renderTimelineView(data);
+                } else {
+                    html = this.renderGridView(data);
+                }
+                
+                this.elements.content.innerHTML = html;
+                
+                // Setup lazy loading for images
+                this.setupLazyLoading();
+            }
+            
+            renderGridView(data) {
+                return `
+                    <div class="grid-view">
+                        ${data.map(item => this.renderItem(item)).join('')}
+                    </div>
+                `;
+            }
+            
+            renderTimelineView(data) {
+                const grouped = this.groupByDate(data);
+                
+                return `
+                    <div class="timeline-view">
+                        ${Object.entries(grouped).map(([date, items]) => `
+                            <div class="timeline-day">
+                                <div class="timeline-date">${this.formatDate(date)}</div>
+                                <div class="timeline-items">
+                                    ${items.map(item => this.renderTimelineItem(item)).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            renderItem(item) {
+                const type = this.state.getState().currentTab;
+                
+                if (type === 'audiobooks') {
+                    return this.renderAudiobook(item);
+                }
+                
+                return this.renderMediaItem(item);
+            }
+            
+            renderMediaItem(item) {
+                const serviceName = this.getServiceName(item.service);
+                const statusClass = this.getStatusClass(item);
+                const statusText = this.getStatusText(item);
+                
+                return `
+                    <div class="media-card" data-service="${item.service || ''}">
+                        <div class="card-header">
+                            <div class="card-title">${item.title}</div>
+                            <div class="card-meta">
+                                ${item.season ? `Season ${item.season} • ` : ''}
+                                ${item.status || 'Unknown'}
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-info">
+                                ${item.service ? `<span class="service-badge service-${item.service}">${serviceName}</span>` : ''}
+                                <span class="status-badge status-${statusClass}">${statusText}</span>
+                            </div>
+                            ${item.next_episode ? `<div class="next-episode">Next: Episode ${item.next_episode}</div>` : ''}
+                            ${item.next_date || item.release_date ? `
+                                <div class="episode-date">${this.formatDate(item.next_date || item.release_date)}</div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            renderAudiobook(item) {
+                const status = item.owned ? (item.listened ? 'completed' : 'owned') : 'missing';
+                const statusText = item.owned ? (item.listened ? '✓ Completed' : '📚 In Library') : '❌ Not in Library';
+                
+                return `
+                    <div class="book-item book-${status}">
+                        <div class="book-number">Book ${item.series_position || '?'}</div>
+                        <div class="book-title">${item.title}</div>
+                        <div class="book-date">${statusText}</div>
+                    </div>
+                `;
+            }
+            
+            renderTimelineItem(item) {
+                const serviceName = this.getServiceName(item.service);
+                const statusClass = this.getStatusClass(item);
+                const statusText = this.getStatusText(item);
+                const time = item.next_date || item.release_date;
+                
+                return `
+                    <div class="timeline-item" data-service="${item.service || ''}">
+                        <div class="timeline-time">
+                            ${time ? new Date(time).toLocaleTimeString('de-DE', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                            }) : 'TBA'}
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">${item.title}</div>
+                            <div class="timeline-subtitle">
+                                ${item.service ? `<span class="service-badge service-${item.service}">${serviceName}</span>` : ''}
+                                ${this.state.getState().currentTab === 'shows' ? 'New Episode' : 'Release'}
+                            </div>
+                        </div>
+                        <span class="status-badge status-${statusClass}">${statusText}</span>
+                    </div>
+                `;
+            }
+            
+            groupByDate(items) {
+                const grouped = {};
+                items.forEach(item => {
+                    const date = item.next_date || item.release_date || 'TBA';
+                    if (!grouped[date]) grouped[date] = [];
+                    grouped[date].push(item);
+                });
+                return grouped;
+            }
+            
+            formatDate(dateStr) {
+                if (!dateStr) return 'TBA';
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('de-DE', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+            
+            getServiceName(service) {
+                const names = {
+                    netflix: 'Netflix',
+                    prime: 'Prime',
+                    disney: 'Disney+',
+                    apple: 'Apple TV+',
+                    sky: 'Sky',
+                    paramount: 'Paramount+',
+                    audible: 'Audible',
+                    crunchyroll: 'Crunchyroll',
+                    wow: 'WOW',
+                    rtl: 'RTL+'
+                };
+                return names[service] || service;
+            }
+            
+            getStatusClass(item) {
+                if (!item.next_date && !item.release_date) return 'upcoming';
+                const now = new Date();
+                const itemDate = new Date(item.next_date || item.release_date);
+                const diffDays = Math.floor((itemDate - now) / (1000 * 60 * 60 * 24));
+                
+                if (diffDays < 0) return 'completed';
+                if (diffDays === 0) return 'today';
+                return 'upcoming';
+            }
+            
+            getStatusText(item) {
+                const statusClass = this.getStatusClass(item);
+                switch (statusClass) {
+                    case 'today': return 'TODAY';
+                    case 'completed': return 'Aired';
+                    default: return 'Upcoming';
+                }
+            }
+            
+            setupLazyLoading() {
+                const images = document.querySelectorAll('img[data-src]');
+                images.forEach(img => this.imageObserver.observe(img));
+            }
+            
+            showLoading() {
+                this.elements.content.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                `;
+            }
+            
+            showError(message) {
+                this.elements.content.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--danger);">
+                        <h3>Error</h3>
+                        <p>${message}</p>
+                        <button onclick="location.reload()" style="
+                            margin-top: 10px; 
+                            padding: 8px 16px; 
+                            background: var(--primary); 
+                            color: white; 
+                            border: none; 
+                            border-radius: 4px; 
+                            cursor: pointer;
+                        ">Retry</button>
+                    </div>
+                `;
+            }
+            
+            updateLastSync() {
+                const { lastSync } = this.state.getState();
+                if (lastSync) {
+                    const now = new Date();
+                    const diff = Math.floor((now - lastSync) / 1000 / 60);
+                    this.elements.lastSync.textContent = diff < 1 ? 'just now' : `${diff} minutes ago`;
+                }
+            }
+            
+            updateSyncStatus() {
+                const { error } = this.state.getState();
+                if (error) {
+                    this.elements.syncIndicator.style.background = '#ef4444';
+                    this.elements.syncStatus.textContent = 'Error';
+                } else {
+                    this.elements.syncIndicator.style.background = '#10b981';
+                    this.elements.syncStatus.textContent = 'Live Sync';
+                }
+            }
+            
+            setupAutoRefresh() {
+                this.refreshTimer = setInterval(async () => {
+                    // Only refresh if user has been active recently
+                    if (Date.now() - this.lastActivity < 30 * 60 * 1000) { // 30 minutes
+                        await this.loadData();
+                    }
+                }, CONFIG.REFRESH_INTERVAL);
+            }
+            
+            setupActivityTracking() {
+                const activities = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+                
+                activities.forEach(activity => {
+                    document.addEventListener(activity, () => {
+                        this.lastActivity = Date.now();
+                    }, { passive: true });
+                });
+            }
+            
+            toggleSettings() {
+                const panel = document.getElementById('settingsPanel');
+                const isOpen = panel.classList.contains('open');
+                
+                if (isOpen) {
+                    panel.classList.remove('open');
+                    panel.setAttribute('aria-hidden', 'true');
+                } else {
+                    panel.classList.add('open');
+                    panel.setAttribute('aria-hidden', 'false');
+                }
+            }
+            
+            // Utility functions
+            debounce(func, wait) {
+                let timeout;
+                return function() {
+                    const context = this, args = arguments;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), wait);
+                };
+            }
+            
+            // Cleanup
+            destroy() {
+                if (this.refreshTimer) {
+                    clearInterval(this.refreshTimer);
+                }
+                this.state = null;
+            }
+        }
+        
+        // Initialize app when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                window.MediaTracker = new MediaTrackerApp();
+            });
+        } else {
+            window.MediaTracker = new MediaTrackerApp();
+        }
+        
+        // Service Worker registration for offline support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+{
+  "name": "universal-media-tracker-optimized",
+  "version": "2.0.0",
+  "description": "Production-ready optimized media tracker for TV shows, movies, and audiobooks with German VOD focus",
+  "private": true,
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "install:all": "npm install && npm run install:server && npm run install:web",
+    "install:server": "cd server && npm install",
+    "install:web": "cd web && npm install",
+    
+    "build": "npm run build:server && npm run build:web",
+    "build:server": "cd server && npm run build",
+    "build:web": "cd web && npm run build",
+    
+    "start": "npm run start:optimized",
+    "start:dev": "npm run dev:server && npm run dev:web",
+    "start:optimized": "NODE_ENV=production pm2 start ecosystem.config.js --env production",
+    "start:staging": "NODE_ENV=staging pm2 start ecosystem.config.js --env staging",
+    "start:docker": "npm run build && node server/dist/index.js",
+    
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:web\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:web": "cd web && npm run dev",
+    
+    "test": "npm run test:server && npm run test:web",
+    "test:server": "cd server && npm run test",
+    "test:web": "cd web && npm run test",
+    
+    "lint": "npm run lint:server && npm run lint:web",
+    "lint:server": "cd server && npm run lint",
+    "lint:web": "cd web && npm run lint",
+    
+    "format": "prettier --write \"**/*.{js,ts,tsx,css,md}\"",
+    "format:check": "prettier --check \"**/*.{js,ts,tsx,css,md}\"",
+    
+    "optimize": "npm run optimize:db && npm run optimize:assets",
+    "optimize:db": "cd server && node dist/scripts/optimize-database.js",
+    "optimize:assets": "npm run minify:css && npm run minify:js",
+    "minify:css": "cleancss -o web/dist/styles.min.css web/styles.css",
+    "minify:js": "terser web/app.js -o web/dist/app.min.js -c -m",
+    
+    "docker:build": "docker build -t media-tracker:latest -f Dockerfile.optimized .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env.optimized -v ./data:/app/data media-tracker:latest",
+    "docker:compose": "docker-compose -f docker-compose.optimized.yml up -d",
+    
+    "deploy": "npm run build && npm run optimize && npm run docker:build && npm run docker:push",
+    "deploy:staging": "npm run deploy -- --target staging",
+    "deploy:production": "npm run deploy -- --target production",
+    
+    "pm2:install": "pm2 install pm2-logrotate",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop ecosystem.config.js",
+    "pm2:restart": "pm2 restart ecosystem.config.js",
+    "pm2:delete": "pm2 delete ecosystem.config.js",
+    "pm2:logs": "pm2 logs",
+    "pm2:monit": "pm2 monit",
+    "pm2:status": "pm2 status",
+    
+    "monitor:health": "curl -f http://localhost:3000/health || exit 1",
+    "monitor:metrics": "curl -f http://localhost:3000/metrics",
+    "monitor:logs": "tail -f logs/app.log",
+    
+    "backup:db": "cp ./data/media_tracker.db ./backups/media_tracker_$(date +%Y%m%d_%H%M%S).db",
+    "backup:all": "npm run backup:db && tar -czf ./backups/full_backup_$(date +%Y%m%d_%H%M%S).tar.gz ./data ./logs",
+    
+    "migrate": "cd server && npm run migrate",
+    "seed": "cd server && npm run seed",
+    "clean": "npm run clean:server && npm run clean:web",
+    "clean:server": "cd server && rm -rf dist node_modules",
+    "clean:web": "cd web && rm -rf dist node_modules",
+    
+    "security:audit": "npm audit --audit-level moderate",
+    "security:fix": "npm audit fix",
+    "security:scan": "npx snyk test",
+    
+    "performance:test": "lighthouse http://localhost:3000 --output=json --output-path=./reports/performance.json",
+    "performance:bundle": "npm run build && npm run analyze:bundle",
+    "analyze:bundle": "npx webpack-bundle-analyzer web/dist/bundle.js",
+    
+    "db:reset": "rm -f ./data/media_tracker.db && cd server && npm run migrate",
+    "db:seed": "cd server && npm run seed:dev",
+    "db:optimize": "cd server && node dist/scripts/optimize-database.js",
+    
+    "maintenance:start": "echo 'Starting maintenance mode...' && pm2 stop ecosystem.config.js",
+    "maintenance:end": "echo 'Ending maintenance mode...' && pm2 start ecosystem.config.js",
+    
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "release": "npm run test && npm run lint && npm run build && npm run changelog"
+  },
+  "keywords": [
+    "media-tracker",
+    "tmdb",
+    "audible",
+    "notion",
+    "docker",
+    "unraid",
+    "tv-shows",
+    "movies",
+    "audiobooks",
+    "vod",
+    "germany",
+    "performance",
+    "optimization"
+  ],
+  "author": "Kilo Code",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/universal-media-tracker"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/universal-media-tracker/issues"
+  },
+  "homepage": "https://github.com/yourusername/universal-media-tracker#readme",
+  "config": {
+    "port": "3000",
+    "host": "0.0.0.0"
+  },
+  "directories": {
+    "test": "server/src/__tests__",
+    "doc": "docs"
+  },
+  "files": [
+    "server/dist",
+    "web/dist",
+    "public",
+    "data",
+    "*.md",
+    "*.json",
+    "*.yml",
+    "*.js"
+  ],
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "prettier": {
+    "semi": true,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "printWidth": 100,
+    "tabWidth": 2
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run test"
+    }
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{css,md,json}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "clean-css-cli": "^5.6.3",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.56.0",
+    "husky": "^8.0.3",
+    "lighthouse": "^11.4.0",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "terser": "^5.26.0",
+    "webpack-bundle-analyzer": "^4.10.1"
+  },
+  "optionalDependencies": {
+    "snyk": "^1.1294.0"
+  }
+}
