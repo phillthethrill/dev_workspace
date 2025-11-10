@@ -2,17 +2,18 @@
   "version": 2,
   "builds": [
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+      "src": "web/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/web/$1"
     }
   ],
   "env": {
@@ -20,13 +21,7 @@
   },
   "build": {
     "env": {
-      "NODE_ENV": "production",
-      "PORT": "3000"
-    }
-  },
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs18.x"
+      "NODE_ENV": "production"
     }
   }
 }
