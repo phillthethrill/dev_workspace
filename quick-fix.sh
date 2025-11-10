@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Quick fix for npm v3.10.9 issue - Manual terminal commands
+# Run these commands in your terminal to fix the npm issue
+
+echo "🔧 Quick npm fix for Mac Mini"
+echo "Run these commands one by one:"
+echo ""
+echo "# 1. Find the correct npm path"
+echo "which npm"
+echo "npm --version"
+echo ""
+echo "# 2. Update npm using the correct path"
+echo "curl -qL https://www.npmjs.com/install.sh | sh"
+echo ""
+echo "# 3. Or manually update via Node.js path"
+echo "/opt/homebrew/bin/npm install -g npm@latest"
+echo ""
+echo "# 4. Verify the fix"
+echo "npm --version"
+echo "npm install -g typescript"
+echo "tsc --version"
+echo ""
+echo "If successful, you should see:"
+echo "- npm version 10.x or higher"
+echo "- tsc (TypeScript compiler) working"
+echo ""
+echo "Then you can run:"
+echo "npm run build"
+echo "npm run start:local"

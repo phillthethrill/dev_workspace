@@ -55,6 +55,31 @@ if [ ! -f ".env" ]; then
     fi
 fi
 
+# Check if npm is working correctly
+echo "🔍 Checking npm version compatibility..."
+NPM_VERSION=$(npm --version 2>/dev/null || echo "unknown")
+echo "Current npm version: $NPM_VERSION"
+
+if [ "$NPM_VERSION" = "3.10.9" ]; then
+    echo "⚠️  npm version 3.10.9 is too old for TypeScript compilation"
+    echo "🔧 Fixing npm version compatibility..."
+    ./fix-npm.sh
+    
+    # Check if npm was fixed
+    NEW_NPM_VERSION=$(npm --version 2>/dev/null || echo "unknown")
+    if [ "$NEW_NPM_VERSION" = "3.10.9" ]; then
+        echo "❌ npm version still old after fix attempt"
+        echo "💡 Please restart your terminal and run this script again"
+        echo "   Or use: npm run start:simple"
+        exit 1
+    else
+        echo "✅ npm updated to version: $NEW_NPM_VERSION"
+    fi
+elif [ "$NPM_VERSION" = "unknown" ]; then
+    echo "❌ npm not found or not working"
+    ./fix-npm.sh
+fi
+
 # Check if dependencies are installed
 if [ ! -d "node_modules" ]; then
     echo "📦 Installing dependencies..."
