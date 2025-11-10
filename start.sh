@@ -7,17 +7,35 @@ set -e
 
 echo "🚀 Starting Universal Media Tracker..."
 
-# Check if Node.js is installed
+# Check if Node.js is installed and version is sufficient
 if ! command -v node &> /dev/null; then
-    echo "❌ Node.js is not installed. Please install Node.js 18+ from https://nodejs.org/"
-    exit 1
+    echo "❌ Node.js is not installed."
+    echo "🔧 Installing Node.js 18+..."
+    ./install-node.sh
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to install Node.js. Please install manually from https://nodejs.org/"
+        exit 1
+    fi
 fi
 
 # Check Node.js version
-NODE_VERSION=$(node --version | cut -d'v' -f2 | cut -d'.' -f1)
+NODE_VERSION=$(node --version 2>/dev/null | cut -d'v' -f2 | cut -d'.' -f1 || echo "0")
 if [ "$NODE_VERSION" -lt 18 ]; then
-    echo "❌ Node.js version 18+ required. Current version: $(node --version)"
-    exit 1
+    echo "⚠️  Node.js version $NODE_VERSION is too old (v18+ required)"
+    echo "🔧 Attempting to install Node.js 18+..."
+    ./install-node.sh
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to install Node.js. Please install manually from https://nodejs.org/"
+        exit 1
+    fi
+    
+    # Re-check version after installation
+    NODE_VERSION=$(node --version | cut -d'v' -f2 | cut -d'.' -f1)
+    if [ "$NODE_VERSION" -lt 18 ]; then
+        echo "❌ Still using old Node.js version after installation"
+        echo "💡 Try restarting your terminal and running this script again"
+        exit 1
+    fi
 fi
 
 echo "✅ Node.js $(node --version) detected"

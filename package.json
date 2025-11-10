@@ -28,7 +28,9 @@
     "pm2:logs": "pm2 logs",
     "test": "npm run test --workspace=server",
     "setup:local": "npm run install:all && npm run build",
-    "start:local": "npm run setup:local && npm run start:production"
+    "start:local": "npm run setup:local && npm run start:production",
+    "start:simple": "node simple-start.js",
+    "install:node": "./install-node.sh"
   },
   "keywords": [
     "media-tracker",

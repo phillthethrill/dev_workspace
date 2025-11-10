@@ -14,8 +14,16 @@ This guide provides step-by-step instructions for deploying the Universal Media 
 
 ### One-Command Setup
 ```bash
+# Option 1: Complete setup (requires Node.js 18+)
 npm run setup:local
 npm run start:local
+
+# Option 2: Install Node.js 18+ automatically
+./install-node.sh
+./start.sh
+
+# Option 3: Simple fallback (works with any Node.js version)
+npm run start:simple
 ```
 
 **That's it!** Your media tracker will be running at `http://localhost:3000`
