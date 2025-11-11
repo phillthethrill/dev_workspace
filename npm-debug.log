@@ -2,23 +2,47 @@
 1 verbose cli [
 1 verbose cli   '/opt/homebrew/Cellar/node@18/18.20.8/bin/node',
 1 verbose cli   '/usr/local/bin/npm',
-1 verbose cli   'install',
-1 verbose cli   'upgrade'
+1 verbose cli   'run',
+1 verbose cli   'fix:npm'
 1 verbose cli ]
 2 info using npm@3.10.9
 3 info using node@v18.20.8
-4 silly loadCurrentTree Starting
-5 silly install loadCurrentTree
-6 silly install readLocalPackageData
-7 verbose stack TypeError: cb.apply is not a function
-7 verbose stack     at /usr/local/lib/node_modules/npm/node_modules/graceful-fs/polyfills.js:267:18
-7 verbose stack     at FSReqCallback.oncomplete (node:fs:203:5)
-8 verbose cwd /Users/McKinsey/Desktop/devthings/dev_workspace
-9 error Darwin 25.1.0
-10 error argv "/opt/homebrew/Cellar/node@18/18.20.8/bin/node" "/usr/local/bin/npm" "install" "upgrade"
-11 error node v18.20.8
-12 error npm  v3.10.9
-13 error cb.apply is not a function
-14 error If you need help, you may report this error at:
-14 error     <https://github.com/npm/npm/issues>
-15 verbose exit [ 1, true ]
+4 verbose run-script [ 'prefix:npm', 'fix:npm', 'postfix:npm' ]
+5 info lifecycle universal-media-tracker@1.0.0~prefix:npm: universal-media-tracker@1.0.0
+6 silly lifecycle universal-media-tracker@1.0.0~prefix:npm: no script for prefix:npm, continuing
+7 info lifecycle universal-media-tracker@1.0.0~fix:npm: universal-media-tracker@1.0.0
+8 verbose lifecycle universal-media-tracker@1.0.0~fix:npm: unsafe-perm in lifecycle true
+9 verbose lifecycle universal-media-tracker@1.0.0~fix:npm: PATH: /usr/local/lib/node_modules/npm/bin/node-gyp-bin:/Users/McKinsey/Desktop/devthings/dev_workspace/node_modules/.bin:/opt/homebrew/Cellar/node@18/18.20.8/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pmk/env/global/bin
+10 verbose lifecycle universal-media-tracker@1.0.0~fix:npm: CWD: /Users/McKinsey/Desktop/devthings/dev_workspace
+11 silly lifecycle universal-media-tracker@1.0.0~fix:npm: Args: [ '-c', './fix-npm.sh' ]
+12 silly lifecycle universal-media-tracker@1.0.0~fix:npm: Returned: code: 1  signal: null
+13 info lifecycle universal-media-tracker@1.0.0~fix:npm: Failed to exec fix:npm script
+14 verbose stack Error: universal-media-tracker@1.0.0 fix:npm: `./fix-npm.sh`
+14 verbose stack Exit status 1
+14 verbose stack     at EventEmitter.<anonymous> (/usr/local/lib/node_modules/npm/lib/utils/lifecycle.js:255:16)
+14 verbose stack     at EventEmitter.emit (node:events:517:28)
+14 verbose stack     at ChildProcess.<anonymous> (/usr/local/lib/node_modules/npm/lib/utils/spawn.js:40:14)
+14 verbose stack     at ChildProcess.emit (node:events:517:28)
+14 verbose stack     at maybeClose (node:internal/child_process:1098:16)
+14 verbose stack     at ChildProcess._handle.onexit (node:internal/child_process:303:5)
+15 verbose pkgid universal-media-tracker@1.0.0
+16 verbose cwd /Users/McKinsey/Desktop/devthings/dev_workspace
+17 error Darwin 25.1.0
+18 error argv "/opt/homebrew/Cellar/node@18/18.20.8/bin/node" "/usr/local/bin/npm" "run" "fix:npm"
+19 error node v18.20.8
+20 error npm  v3.10.9
+21 error code ELIFECYCLE
+22 error universal-media-tracker@1.0.0 fix:npm: `./fix-npm.sh`
+22 error Exit status 1
+23 error Failed at the universal-media-tracker@1.0.0 fix:npm script './fix-npm.sh'.
+23 error Make sure you have the latest version of node.js and npm installed.
+23 error If you do, this is most likely a problem with the universal-media-tracker package,
+23 error not with npm itself.
+23 error Tell the author that this fails on your system:
+23 error     ./fix-npm.sh
+23 error You can get information on how to open an issue for this project with:
+23 error     npm bugs universal-media-tracker
+23 error Or if that isn't available, you can get their info via:
+23 error     npm owner ls universal-media-tracker
+23 error There is likely additional logging output above.
+24 verbose exit [ 1, true ]
