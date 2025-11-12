@@ -2,7 +2,7 @@
   "name": "@universal-media-tracker/server",
   "version": "1.0.0",
   "description": "Backend API server for Universal Media Tracker",
-  "main": "dist/index.js",
+  "main": "dist/optimized-index.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",

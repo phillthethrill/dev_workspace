@@ -3,8 +3,8 @@ import { getLogger } from '../utils/logger';
 import { getCache } from '../utils/cache';
 
 export interface RateLimitConfig {
-  windowMs: number;
-  max: number;
+  windowMs?: number;
+  max?: number;
   message?: string;
   keyGenerator?: (req: Request) => string;
 }
@@ -12,7 +12,7 @@ export interface RateLimitConfig {
 export class RateLimiter {
   private config: RateLimitConfig;
 
-  constructor(config: RateLimitConfig) {
+  constructor(config: RateLimitConfig = {}) {
     this.config = {
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 100,
@@ -24,7 +24,7 @@ export class RateLimiter {
   middleware = (req: Request, res: Response, next: NextFunction) => {
     const cache = getCache();
     const key = this.getKey(req);
-    const windowStart = Date.now() - this.config.windowMs;
+    const windowStart = Date.now() - (this.config.windowMs || 15 * 60 * 1000);
     
     // Get current request count for this key
     const keyPrefix = `rate_limit:${key}:`;
@@ -41,10 +41,10 @@ export class RateLimiter {
     // Count current requests
     const currentCount = cache.keys().filter(k => k.startsWith(keyPrefix)).length;
     
-    if (currentCount >= this.config.max) {
+    if (currentCount >= (this.config.max || 100)) {
       res.status(429).json({
         error: this.config.message,
-        retryAfter: Math.ceil(this.config.windowMs / 1000)
+        retryAfter: Math.ceil((this.config.windowMs || 15 * 60 * 1000) / 1000)
       });
       return;
     }
@@ -55,9 +55,9 @@ export class RateLimiter {
     
     // Add rate limit headers
     res.set({
-      'X-RateLimit-Limit': this.config.max.toString(),
-      'X-RateLimit-Remaining': Math.max(0, this.config.max - currentCount - 1).toString(),
-      'X-RateLimit-Reset': new Date(Date.now() + this.config.windowMs).toISOString()
+      'X-RateLimit-Limit': (this.config.max || 100).toString(),
+      'X-RateLimit-Remaining': Math.max(0, (this.config.max || 100) - currentCount - 1).toString(),
+      'X-RateLimit-Reset': new Date(Date.now() + (this.config.windowMs || 15 * 60 * 1000)).toISOString()
     });
     
     next();

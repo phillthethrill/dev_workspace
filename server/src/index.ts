@@ -13,8 +13,7 @@ import { GermanVODChecker } from './services/german-vod-checker';
 import { AudibleManager } from './services/audible-manager';
 import { getLogger } from './utils/logger';
 
-// Simple __dirname replacement for commonjs
-const __dirname = path.resolve();
+// Use the optimized index instead
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000');

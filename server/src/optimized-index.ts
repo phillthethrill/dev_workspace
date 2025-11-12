@@ -26,7 +26,7 @@ import {
 } from './middleware/security';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 // Enhanced configuration
 const CONFIG = {
@@ -189,14 +189,17 @@ async function updateShowEpisodes(): Promise<void> {
   
   try {
     const dbCacheKey = 'shows_airing_cached';
-    let shows = cache.get(dbCacheKey);
-    
+    let shows = cache.get(dbCacheKey) as any[];
+
     if (!shows) {
-      shows = await db.cachedQuery(`
-        SELECT * FROM shows 
+      shows = await db.cachedQuery(
+        'shows_airing_cached',
+        `SELECT * FROM shows
         WHERE status = 'airing' AND next_date IS NOT NULL
-        ORDER BY next_date ASC
-      `, [], 600000); // Cache for 10 minutes
+        ORDER BY next_date ASC`,
+        [],
+        600000
+      ); // Cache for 10 minutes
       cache.set(dbCacheKey, shows, 600000);
     }
 
@@ -265,7 +268,7 @@ async function updateMovieReleases(): Promise<void> {
   
   try {
     const cacheKey = 'upcoming_movies_cached';
-    let movies = cache.get(cacheKey);
+    let movies = cache.get(cacheKey) as any[];
 
     if (!movies) {
       const tmdb = new TMDBClient(CONFIG.tmdb_api_key);
@@ -451,7 +454,7 @@ process.on('uncaughtException', (error) => {
 
 process.on('unhandledRejection', (reason, promise) => {
   const logger = getLogger();
-  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error('Unhandled Rejection', { reason, promise });
   process.exit(1);
 });
 
